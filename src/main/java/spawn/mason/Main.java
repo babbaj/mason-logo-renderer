@@ -49,7 +49,6 @@ public class Main {
         final int minY = maxDoc(documents.stream(), false, true).get();
         final int width = maxX - minX;
         final int height = maxY - minY;
-        System.out.println(height * SZ);
 
         // approximately 11k x 11k
         final BufferedImage image = new BufferedImage((width + 1) * SZ, (height + 1) * SZ, BufferedImage.TYPE_BYTE_BINARY);
