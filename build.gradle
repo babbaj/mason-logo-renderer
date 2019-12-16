@@ -1,0 +1,17 @@
+plugins {
+    id 'java'
+}
+
+group 'spawn.mason'
+version '1.0-SNAPSHOT'
+
+sourceCompatibility = 1.8
+
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile 'org.mongodb:mongodb-driver-sync:3.12.0'
+}
