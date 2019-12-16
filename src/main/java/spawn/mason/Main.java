@@ -19,7 +19,7 @@ import java.util.stream.StreamSupport;
 
 public class Main {
 
-    static final int SZ = 144;
+    private static final int SZ = 144;
 
     public static void main(String[] args) throws IOException {
         MongoClient mongoClient = MongoClients.create("mongodb://localhost");
@@ -40,7 +40,7 @@ public class Main {
         }
     }
 
-    static BufferedImage renderImage(FindIterable<Document> iterable) {
+    private static BufferedImage renderImage(FindIterable<Document> iterable) {
         List<Document> documents =  StreamSupport.stream(iterable.spliterator(), false)
             .collect(Collectors.toList());
         final int maxX = maxDoc(documents.stream(), true, false).get();
@@ -71,19 +71,19 @@ public class Main {
         return image;
     }
 
-    static void fillWhite(BufferedImage image) {
+    private static void fillWhite(BufferedImage image) {
         Graphics2D graphics = image.createGraphics();
 
         graphics.setPaint ( new Color ( 255, 255, 255 ) );
         graphics.fillRect ( 0, 0, image.getWidth(), image.getHeight() );
     }
 
-    static Optional<Integer> maxDoc(Stream<Document> documents, boolean x, boolean reversed) {
+    private static Optional<Integer> maxDoc(Stream<Document> documents, boolean x, boolean reversed) {
         return maxInt(documents.map(doc -> parseId(doc.getString("sectionId"))), x, reversed);
     }
 
     // pretty dumb api lmao
-    static Optional<Integer> maxInt(Stream<IntPair> stream, boolean x, boolean reversed) {
+    private static Optional<Integer> maxInt(Stream<IntPair> stream, boolean x, boolean reversed) {
         final ToIntFunction<IntPair> getter = x ? p -> p.x : p -> p.y;
         Comparator<IntPair> comp = Comparator.comparingInt(getter);
         if (reversed) comp = comp.reversed();
@@ -91,12 +91,12 @@ public class Main {
     }
 
 
-    static IntPair parseId(String id) {
+    private static IntPair parseId(String id) {
         String[] split = id.split(",");
         return new IntPair(Integer.parseInt(split[0]), Integer.parseInt(split[1]));
     }
 
-    static boolean[][] parseObsidian(String data) {
+    private static boolean[][] parseObsidian(String data) {
         final String[] lines = data.split("\\n");
         final boolean[][] obsidian = new boolean[SZ][SZ];
         for (int z = 0; z < SZ; z++) {
