@@ -13,10 +13,7 @@ import java.util.*;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.function.ToIntFunction;
-import java.util.stream.Collectors;
-import java.util.stream.LongStream;
-import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
+import java.util.stream.*;
 
 public class Main {
 
@@ -37,22 +34,40 @@ public class Main {
 
         final long start = startTime(sections);
         final long end = endTime(sections);
-        int i = 0;
+        final long step = TimeUnit.HOURS.toMillis(3);
+        final int count = (int)Math.ceil(((end - start) / (double)step)) + 1;
+
         final File outDir = new File("output");
         outDir.mkdir();
         for (File f : outDir.listFiles()) { f.delete(); }
 
-        for (long t = start; ; t += TimeUnit.HOURS.toMillis(3)) {
-            final BufferedImage image = renderImage(sections, t);
-            final String name = String.format("%03d", i);
-            final File f = new File("output/" + name + ".png");
-            System.out.println(i);
-            ImageIO.write(image, "png", f);
-            i++;
-            if (t > end) break;
-        }
+
+        IntStream.iterate(0, i -> i + 1).parallel()
+            .limit(count)
+            .forEach(i -> {
+                final long t = start + i * step;
+                try {
+                    final BufferedImage image = renderImage(sections, t);
+                    drawTimestamp(image.getGraphics(), t);
+                    final String name = String.format("%03d", i);
+                    final File f = new File("output/" + name + ".png");
+                    System.out.println(i);
+                    ImageIO.write(image, "png", f);
+                } catch (IOException ex) {
+                    throw new RuntimeException(ex);
+                }
+            });
+
 
         System.out.println((System.currentTimeMillis() - now) / 1000 + "s");
+    }
+
+    private static void drawTimestamp(Graphics g, long time) {
+        Font currentFont = g.getFont();
+        Font newFont = currentFont.deriveFont(currentFont.getSize() * 10F);
+        g.setFont(newFont);
+        g.setColor(Color.BLACK);
+        g.drawString(String.valueOf(time), 100, 200);
     }
 
     static class IntPair {
