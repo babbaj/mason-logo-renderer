@@ -22,8 +22,9 @@ public class Main {
     private static final int SZ = 144;
 
     public static void main(String[] args) throws IOException {
-        MongoClient mongoClient = MongoClients.create("mongodb://localhost");
-        MongoDatabase database = mongoClient.getDatabase("masonweb");
+        MongoClient mongoClient = MongoClients.create("mongodb://babbaj:babbaj1@ds023448.mlab.com:23448/heroku_7scmkkrf");
+        //MongoDatabase database = mongoClient.getDatabase("masonweb");
+        MongoDatabase database = mongoClient.getDatabase("heroku_7scmkkrf");
         MongoCollection<Document> collection = database.getCollection("regions");
         FindIterable<Document> documents = collection.find();
 
@@ -74,8 +75,8 @@ public class Main {
     private static void fillWhite(BufferedImage image) {
         Graphics2D graphics = image.createGraphics();
 
-        graphics.setPaint ( new Color ( 255, 255, 255 ) );
-        graphics.fillRect ( 0, 0, image.getWidth(), image.getHeight() );
+        graphics.setPaint(new Color ( 255, 255, 255 ));
+        graphics.fillRect(0, 0, image.getWidth(), image.getHeight());
     }
 
     private static Optional<Integer> maxDoc(Stream<Document> documents, boolean x, boolean reversed) {
