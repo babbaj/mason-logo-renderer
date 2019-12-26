@@ -12,12 +12,15 @@ import java.io.IOException;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.ToIntFunction;
 import java.util.stream.*;
 
 public class Main {
 
     private static final int SZ = 144;
+    private static final List<Stripe> STRIPES = Collections.unmodifiableList(genStripes());
+
 
     public static void main(String[] args) throws IOException {
         final long now = System.currentTimeMillis();
@@ -34,30 +37,30 @@ public class Main {
 
         final long start = startTime(sections);
         final long end = endTime(sections);
-        final long step = TimeUnit.HOURS.toMillis(3);
+        final long step = TimeUnit.MINUTES.toMillis(10);//TimeUnit.HOURS.toMillis(1);
         final int count = (int)Math.ceil(((end - start) / (double)step)) + 1;
 
         final File outDir = new File("output");
         outDir.mkdir();
         for (File f : outDir.listFiles()) { f.delete(); }
 
-
+        AtomicInteger a = new AtomicInteger(0);
         IntStream.iterate(0, i -> i + 1).parallel()
             .limit(count)
             .forEach(i -> {
                 final long t = start + i * step;
                 try {
                     final BufferedImage image = renderImage(sections, t);
-                    drawTimestamp(image.getGraphics(), t);
+                    //drawTimestamp(image.getGraphics(), t);
                     final String name = String.format("%03d", i);
-                    final File f = new File("output/" + name + ".png");
-                    System.out.println(i);
+                    final File f = new File(outDir, name + ".png");
                     ImageIO.write(image, "png", f);
+
+                    System.out.println(a.getAndIncrement());
                 } catch (IOException ex) {
                     throw new RuntimeException(ex);
                 }
             });
-
 
         System.out.println((System.currentTimeMillis() - now) / 1000 + "s");
     }
@@ -133,15 +136,22 @@ public class Main {
         return image;
     }
 
-    private static void renderSection(BufferedImage image, Section sec, int x, int z, long time) {
+    private static void renderSection(BufferedImage image, Section sec, int imageX, int imageZ, long time) {
         if (time < sec.startTime) return;
+        final long timeTaken = sec.endTime - sec.startTime;
+        final long relativeTime = time - sec.startTime;
+        final double fraction = Math.min((double)relativeTime / (double)timeTaken, 1.0); // 0 - 1.0
 
         final boolean[][] obsidian = sec.obsidian;
-        for (int i = 0; i < SZ; i++)
-            for (int j = 0; j < SZ; j++) {
-                final boolean b = obsidian[i][j];
-                image.setRGB(x + i, z + j, b ? 0 : 0xFF_FF_FF_FF);
+        for (int i = 0; i < STRIPES.size() * fraction; i++) {
+            final Stripe stripe = STRIPES.get(i);
+            for (int x : stripe.xVals) {
+                final int z = stripe.z;
+
+                final boolean b = obsidian[x][z];
+                image.setRGB(imageX + x, imageZ + z, b ? 0 : 0xFF_FF_FF_FF);
             }
+        }
     }
 
     private static void fillWhite(BufferedImage image) {
@@ -165,19 +175,12 @@ public class Main {
             .getAsLong();
     }
 
-
     // pretty dumb api lmao
     private static Optional<Integer> maxInt(Stream<? extends IntPair> stream, boolean x, boolean reversed) {
         final ToIntFunction<IntPair> getter = x ? p -> p.x : p -> p.z;
         Comparator<IntPair> comp = Comparator.comparingInt(getter);
         if (reversed) comp = comp.reversed();
         return stream.max(comp).map(getter::applyAsInt);
-    }
-
-
-    private static IntPair parseId(String id) {
-        String[] split = id.split(",");
-        return new IntPair(Integer.parseInt(split[0]), Integer.parseInt(split[1]));
     }
 
     private static boolean[][] parseObsidian(String data) {
@@ -196,4 +199,69 @@ public class Main {
         return obsidian;
     }
 
+    static class Stripe {
+        static final int STRIPE_WIDTH = 5;
+
+        final int xCenter;
+        final int[] xVals;
+        final int z;
+
+        public Stripe(int x, int z) {
+            this.z = z;
+            this.xCenter = x;
+            ArrayList<Integer> xv = new ArrayList<>();
+            for (int dx = 0; dx >= -STRIPE_WIDTH / 2; dx--) {
+                xv.add(x + dx);
+            }
+            for (int dx = 1; dx <= STRIPE_WIDTH / 2; dx++) {
+                xv.add(x + dx);
+            }
+            this.xVals = xv.stream().mapToInt(t -> t).filter(xx -> xx >= 0 && xx < SZ).toArray();
+            if (xVals.length == 0) {
+                throw new IllegalStateException();
+            }
+        }
+
+    }
+
+    private static List<Stripe> genStripes() {
+        int x = Stripe.STRIPE_WIDTH / 2;
+        int z = 0;
+        int dz = 1;
+        final List<Stripe> stripes = new ArrayList<>();
+        final HashSet<String> chk = new HashSet<>();
+        while (true) {
+            Stripe stripe = new Stripe(x, z);
+            stripes.add(stripe);
+            for (int xx : stripe.xVals) {
+                String k = xx + "," + stripe.z;
+                if (chk.contains(k)) {
+                    throw new IllegalStateException(k);
+                }
+                chk.add(k);
+            }
+            if (z + dz >= SZ || z + dz < 0) {
+                if (x + Stripe.STRIPE_WIDTH / 2 >= SZ - 1) {
+                    break;
+                }
+                x += Stripe.STRIPE_WIDTH;
+                dz = -dz;
+            } else {
+                z += dz;
+            }
+        }
+        for (int cx = 0; cx < SZ; cx++) {
+            for (int cz = 0; cz < SZ; cz++) {
+                String k = cx + "," + cz;
+                if (!chk.contains(k)) {
+                    throw new IllegalStateException(k);
+                }
+                chk.remove(k);
+            }
+        }
+        if (!chk.isEmpty()) {
+            throw new IllegalStateException(chk + "");
+        }
+        return stripes;
+    }
 }
