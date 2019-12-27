@@ -124,7 +124,7 @@ public class Main {
         final int height = maxZ - minZ;
 
         // approximately 11k x 11k
-        final BufferedImage image = new BufferedImage((width + 1) * SZ, (height + 1) * SZ, BufferedImage.TYPE_INT_ARGB);
+        final BufferedImage image = new BufferedImage((width + 1) * SZ, (height + 1) * SZ, BufferedImage.TYPE_BYTE_BINARY);
         fillBlank(image);
         return image;
     }
