@@ -50,7 +50,8 @@ public class Main {
             .forEach(i -> {
                 final long t = start + i * step;
                 try {
-                    final BufferedImage image = renderImage(sections, t);
+                    final BufferedImage image = defaultImage(sections);
+                    renderImage(sections, t, image);
                     //drawTimestamp(image.getGraphics(), t);
                     final String name = String.format("%03d", i);
                     final File f = new File(outDir, name + ".png");
@@ -67,7 +68,7 @@ public class Main {
 
     private static void drawTimestamp(Graphics g, long time) {
         Font currentFont = g.getFont();
-        Font newFont = currentFont.deriveFont(currentFont.getSize() * 10F);
+        Font newFont = currentFont.deriveFont(currentFont.getSize() * 20F);
         g.setFont(newFont);
         g.setColor(Color.BLACK);
         g.drawString(String.valueOf(time), 100, 200);
@@ -114,7 +115,7 @@ public class Main {
     }
 
 
-    private static BufferedImage renderImage(List<Section> sections, long time) {
+    private static BufferedImage defaultImage(List<Section> sections) {
         final int maxX = maxInt(sections.stream(), true, false).get();
         final int minX = maxInt(sections.stream(), true, true).get();
         final int maxZ = maxInt(sections.stream(), false, false).get();
@@ -125,6 +126,20 @@ public class Main {
         // approximately 11k x 11k
         final BufferedImage image = new BufferedImage((width + 1) * SZ, (height + 1) * SZ, BufferedImage.TYPE_BYTE_BINARY);
         fillWhite(image);
+        return image;
+    }
+
+    private static BufferedImage renderImage(List<Section> sections, long time, BufferedImage image) {
+        final int maxX = maxInt(sections.stream(), true, false).get();
+        final int minX = maxInt(sections.stream(), true, true).get();
+        final int maxZ = maxInt(sections.stream(), false, false).get();
+        final int minZ = maxInt(sections.stream(), false, true).get();
+        //final int width = maxX - minX;
+        //final int height = maxZ - minZ;
+
+        // approximately 11k x 11k
+        //final BufferedImage image = new BufferedImage((width + 1) * SZ, (height + 1) * SZ, BufferedImage.TYPE_BYTE_BINARY);
+        //fillWhite(image);
 
         sections.forEach(sec -> {
             final int baseX = (sec.x + Math.abs(minX)) * SZ;
@@ -167,7 +182,6 @@ public class Main {
             .min()
             .getAsLong();
     }
-
     private static long endTime(List<Section> sections) {
         return sections.stream()
             .mapToLong(s -> s.endTime)
