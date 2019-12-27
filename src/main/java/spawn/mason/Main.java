@@ -129,7 +129,7 @@ public class Main {
         return image;
     }
 
-    private static BufferedImage renderImage(List<Section> sections, long time, BufferedImage image) {
+    private static void renderImage(List<Section> sections, long time, BufferedImage image) {
         final int maxX = maxInt(sections.stream(), true, false).get();
         final int minX = maxInt(sections.stream(), true, true).get();
         final int maxZ = maxInt(sections.stream(), false, false).get();
@@ -147,8 +147,6 @@ public class Main {
 
             renderSection(image, sec, baseX, baseZ, time);
         });
-
-        return image;
     }
 
     private static void renderSection(BufferedImage image, Section sec, int imageX, int imageZ, long time) {
