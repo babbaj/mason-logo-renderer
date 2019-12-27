@@ -37,7 +37,7 @@ public class Main {
 
         final long start = startTime(sections);
         final long end = endTime(sections);
-        final long step = TimeUnit.MINUTES.toMillis(10);//TimeUnit.HOURS.toMillis(1);
+        final long step = TimeUnit.MINUTES.toMillis(10);
         final int count = (int)Math.ceil(((end - start) / (double)step)) + 1;
 
         final File outDir = new File("output");
@@ -124,8 +124,8 @@ public class Main {
         final int height = maxZ - minZ;
 
         // approximately 11k x 11k
-        final BufferedImage image = new BufferedImage((width + 1) * SZ, (height + 1) * SZ, BufferedImage.TYPE_BYTE_BINARY);
-        fillWhite(image);
+        final BufferedImage image = new BufferedImage((width + 1) * SZ, (height + 1) * SZ, BufferedImage.TYPE_INT_ARGB);
+        fillBlank(image);
         return image;
     }
 
@@ -164,15 +164,15 @@ public class Main {
                 final int z = stripe.z;
 
                 final boolean b = obsidian[x][z];
-                image.setRGB(imageX + x, imageZ + z, b ? 0 : 0xFF_FF_FF_FF);
+                image.setRGB(imageX + x, imageZ + z, b ? 0xFF_00_00_00 : 0x00_FF_FF_FF);
             }
         }
     }
 
-    private static void fillWhite(BufferedImage image) {
+    private static void fillBlank(BufferedImage image) {
         Graphics2D graphics = image.createGraphics();
 
-        graphics.setPaint(new Color (255, 255, 255));
+        graphics.setPaint(new Color (255, 255, 255, 0));
         graphics.fillRect(0, 0, image.getWidth(), image.getHeight());
     }
 
